@@ -7,6 +7,10 @@ import { Separator } from './ui/separator'
 import { OutlineButton } from './ui/outline-button'
 import { useQuery } from '@tanstack/react-query'
 import { getSummary } from '../http/get-summary'
+import dayjs from 'dayjs'
+import ptBr from 'dayjs/locale/pt-br'
+
+dayjs.locale(ptBr) // dia em português
 
 export function Summary() {
   const { data } = useQuery({
@@ -15,12 +19,22 @@ export function Summary() {
     staleTime: 1000 * 60, // 60 segundos
   })
 
+  if (!data) {
+    return null
+  } // se o data não existir para no if.
+
+  const firstDayOfWeek = dayjs().startOf('week').format('D MMM') // 1° dia da semana
+  const lastDayOfWeek = dayjs().endOf('week').format('D MMM') // último dia da semana
+  const completedPercentage = Math.round((data.completed * 100) / data.total) // cálculo barra de progresso
+
   return (
     <div className="py-10 max-w-[480px] px-5 mx-auto flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <InOrbitIcon />
-          <span className="text-lg font-semibold">5 a 10 de agosto</span>
+          <span className="text-lg font-semibold capitalize">
+            {firstDayOfWeek} - {lastDayOfWeek}
+          </span>
         </div>
 
         <DialogTrigger asChild>
@@ -33,15 +47,17 @@ export function Summary() {
 
       <div className="flex flex-col gap-3">
         <Progress value={8} max={15}>
-          <ProgressIndicator style={{ width: '50%' }} />
+          <ProgressIndicator style={{ width: `${completedPercentage}` }} />
         </Progress>
 
         <div className="flex items-center justify-between text-xs text-zinc-400">
           <span>
-            Você completou <span className="text-zinc-100">8</span> de{' '}
-            <span className="text-zinc-100">15</span> metas nessa semana.
+            Você completou{' '}
+            <span className="text-zinc-100">{data?.completed}</span> de{' '}
+            <span className="text-zinc-100">{data?.total}</span> metas nessa
+            semana.
           </span>
-          <span>58%</span>
+          <span>{completedPercentage}%</span>
         </div>
       </div>
 
