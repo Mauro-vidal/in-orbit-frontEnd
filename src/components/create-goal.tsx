@@ -16,6 +16,8 @@ import { Button } from './ui/button'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { createGoal } from '../http/create-goal'
+import { useQueryClient } from '@tanstack/react-query'
 
 const createGoalForm = z.object({
   title: z.string().min(1, 'Informe a atividade que deseja realizar'),
@@ -25,13 +27,23 @@ const createGoalForm = z.object({
 type createGoalForm = z.infer<typeof createGoalForm> // infer consegue determinar o tipo de um schema automaticamente
 
 export function CreateGoal() {
-  const { register, control, handleSubmit, formState } =
+  const queryClient = useQueryClient()
+
+  const { register, control, handleSubmit, formState, reset } =
     useForm<createGoalForm>({
       resolver: zodResolver(createGoalForm),
     })
 
-  function handleCreateGoal(data: createGoalForm) {
-    console.log(data)
+  async function handleCreateGoal(data: createGoalForm) {
+    await createGoal({
+      title: data.title,
+      desiredWeeklyFrequency: data.desiredWeeklyFrequency,
+    })
+
+    queryClient.invalidateQueries({ queryKey: ['summary'] }) // diminui a opacidade
+    queryClient.invalidateQueries({ queryKey: ['pending-goals'] }) // diminui a opacidade
+
+    reset()
   }
 
   return (
